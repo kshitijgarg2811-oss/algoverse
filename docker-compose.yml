@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Database
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - algoverse-network
+
+  # Cache & Queue
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - algoverse-network
+
+  # Judge0 Services
+  judge0-server:
+    image: judge0/judge0:1.13.0
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    ports:
+      - "2358:2358"
+    privileged: true
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    environment:
+      - REDIS_PASSWORD=
+    networks:
+      - algoverse-network
+
+  judge0-worker:
+    image: judge0/judge0:1.13.0
+    command: ["./scripts/workers"]
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    privileged: true
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    environment:
+      - REDIS_PASSWORD=
+    networks:
+      - algoverse-network
+
+  judge0-db:
+    image: postgres:13.0
+    env_file:
+      - judge0.conf
+    volumes:
+      - judge0_db_data:/var/lib/postgresql/data
+    networks:
+      - algoverse-network
+
+  judge0-redis:
+    image: redis:6.0
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--appendfsync", "everysec"]
+    volumes:
+      - judge0_redis_data:/data
+    networks:
+      - algoverse-network
+
+volumes:
+  mongo_data:
+  redis_data:
+  judge0_db_data:
+  judge0_redis_data:
+
+networks:
+  algoverse-network:
+    driver: bridge
