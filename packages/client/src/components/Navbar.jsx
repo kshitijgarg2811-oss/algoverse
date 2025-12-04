@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Code2, LogIn, LogOut, User } from 'lucide-react';
+import { Code2, LogIn, LogOut, User, Swords } from 'lucide-react'; // Added Swords icon
 import { AuthContext } from '../context/Authcontext';
 
 const Navbar = () => {
@@ -15,9 +15,13 @@ const Navbar = () => {
                 </Link>
 
                 <div className="hidden md:flex items-center gap-8">
+                    {/* NEW LINKS ADDED HERE */}
+                    <Link to="/problems" className="text-muted hover:text-white transition-colors">Problems</Link>
+                    <Link to="/battle" className="text-muted hover:text-white transition-colors flex items-center gap-1">
+                        <Swords className="w-4 h-4" /> Battle
+                    </Link>
                     <Link to="/contests" className="text-muted hover:text-white transition-colors">Contests</Link>
                     <Link to="/leaderboard" className="text-muted hover:text-white transition-colors">Leaderboard</Link>
-                    <Link to="/discuss" className="text-muted hover:text-white transition-colors">Discuss</Link>
                 </div>
 
                 <div className="flex items-center gap-4">

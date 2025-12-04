@@ -11,7 +11,7 @@ services:
     networks:
       - algoverse-network
 
-  # Cache & Queue
+  # Cache & Queue (Main App)
   redis:
     image: redis:alpine
     ports:
@@ -24,8 +24,6 @@ services:
   # Judge0 Services
   judge0-server:
     image: judge0/judge0:1.13.0
-    volumes:
-      - ./judge0.conf:/judge0.conf:ro
     ports:
       - "2358:2358"
     privileged: true
@@ -33,28 +31,51 @@ services:
       - judge0-db
       - judge0-redis
     environment:
-      - REDIS_PASSWORD=
+      # FIX: Disable sandbox for Windows compatibility
+      - JUDGE0_USE_ISOLATE=false
+      - JUDGE0_TELEMETRY_ENABLE=false
+      - JUDGE0_MAINTENANCE_MODE=false
+      # Database Config
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0
+      - POSTGRES_DB=judge0
+      - POSTGRES_HOST=judge0-db
+      - POSTGRES_PORT=5432
+      # Redis Config
+      - REDIS_HOST=judge0-redis
+      - REDIS_PORT=6379
     networks:
       - algoverse-network
 
   judge0-worker:
     image: judge0/judge0:1.13.0
     command: ["./scripts/workers"]
-    volumes:
-      - ./judge0.conf:/judge0.conf:ro
     privileged: true
     depends_on:
       - judge0-db
       - judge0-redis
     environment:
-      - REDIS_PASSWORD=
+      # FIX: Disable sandbox here too
+      - JUDGE0_USE_ISOLATE=false
+      - JUDGE0_TELEMETRY_ENABLE=false
+      # Database Config
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0
+      - POSTGRES_DB=judge0
+      - POSTGRES_HOST=judge0-db
+      - POSTGRES_PORT=5432
+      # Redis Config
+      - REDIS_HOST=judge0-redis
+      - REDIS_PORT=6379
     networks:
       - algoverse-network
 
   judge0-db:
     image: postgres:13.0
-    env_file:
-      - judge0.conf
+    environment:
+      - POSTGRES_USER=judge0
+      - POSTGRES_PASSWORD=judge0
+      - POSTGRES_DB=judge0
     volumes:
       - judge0_db_data:/var/lib/postgresql/data
     networks:

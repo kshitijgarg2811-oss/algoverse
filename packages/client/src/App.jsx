@@ -6,9 +6,12 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ProblemWorkspace from './pages/ProblemWorkspace';
-import Problems from './pages/Problems'; // New
-import Leaderboard from './pages/Leaderboard'; // New
-import Contests from './pages/Contests'; // New
+import Problems from './pages/Problems';
+import Leaderboard from './pages/Leaderboard';
+import Contests from './pages/Contests';
+// New Imports
+import BattleLobby from './pages/BattleLobby';
+import BattleRoom from './pages/BattleRoom';
 
 function App() {
   return (
@@ -19,10 +22,13 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/problems" element={<Problems />} /> {/* Route added */}
+            <Route path="/problems" element={<Problems />} />
             <Route path="/problem/:id" element={<ProblemWorkspace />} />
-            <Route path="/leaderboard" element={<Leaderboard />} /> {/* Route added */}
-            <Route path="/contests" element={<Contests />} /> {/* Route added */}
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/contests" element={<Contests />} />
+            {/* Battle Routes */}
+            <Route path="/battle" element={<BattleLobby />} />
+            <Route path="/battle/:id" element={<BattleRoom />} />
             </Routes>
         </Layout>
         </Router>

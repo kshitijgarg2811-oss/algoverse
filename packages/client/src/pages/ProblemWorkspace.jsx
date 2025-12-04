@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import CodeEditor from '../components/CodeEditor';
-import DiscussionPanel from '../components/DiscussionPanel'; // Import Discussion Panel
+import DiscussionPanel from '../components/DiscussionPanel';
+import AICoachPanel from '../components/AICoachPanel'; // <--- IMPORT
 import { AuthContext } from '../context/Authcontext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -12,7 +13,7 @@ const ProblemWorkspace = () => {
     const { user } = useContext(AuthContext);
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('description'); // New State for Tabs
+    const [activeTab, setActiveTab] = useState('description'); 
     const [socket, setSocket] = useState(null);
     
     // Editor State
@@ -21,14 +22,12 @@ const ProblemWorkspace = () => {
     const [output, setOutput] = useState(null);
     const [isRunning, setIsRunning] = useState(false);
 
-    // Connect to Socket.io
     useEffect(() => {
         const newSocket = io('http://localhost:5000');
         setSocket(newSocket);
         return () => newSocket.close();
     }, []);
 
-    // Fetch Problem Data
     useEffect(() => {
         const fetchProblem = async () => {
             try {
@@ -102,11 +101,17 @@ const ProblemWorkspace = () => {
                     >
                         Discussion
                     </button>
+                    <button 
+                        onClick={() => setActiveTab('ai-coach')}
+                        className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === 'ai-coach' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-500/10' : 'text-muted hover:text-purple-300'}`}
+                    >
+                        AI Coach
+                    </button>
                 </div>
 
                 {/* Tab Content */}
                 <div className="flex-grow overflow-y-auto">
-                    {activeTab === 'description' ? (
+                    {activeTab === 'description' && (
                         <div className="p-6 space-y-6">
                             <div className="space-y-2">
                                 <h1 className="text-3xl font-bold text-white">{problem.title}</h1>
@@ -155,9 +160,9 @@ const ProblemWorkspace = () => {
                                 </motion.div>
                             )}
                         </div>
-                    ) : (
-                        <DiscussionPanel problemId={id} />
                     )}
+                    {activeTab === 'discussion' && <DiscussionPanel problemId={id} />}
+                    {activeTab === 'ai-coach' && <AICoachPanel code={code} problem={problem} />}
                 </div>
             </div>
 

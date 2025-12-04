@@ -9,8 +9,10 @@ import { Server } from 'socket.io';
 import { Queue, QueueEvents } from 'bullmq'; 
 import authRoutes from './routes/auth.js';
 import problemRoutes from './routes/problem.js'; 
-import discussionRoutes from './routes/discussions.js'; // New Import
+import discussionRoutes from './routes/discussions.js'; 
+import aiRoutes from './routes/ai.js'; // <--- IMPORT THIS
 import Submission from './models/Submission.js'; 
+import { setupBattleHandlers } from './sockets/battleHandler.js'; // <--- IMPORT
 
 dotenv.config();
 
@@ -51,58 +53,49 @@ const submissionQueue = new Queue('submission-queue', {
     connection: redisConnection
 });
 
-// Queue Events (For listening to job completion)
 const queueEvents = new QueueEvents('submission-queue', {
     connection: redisConnection
 });
 
 // --- Real-Time Execution Listener ---
 queueEvents.on('completed', async ({ jobId }) => {
-    // BullMQ returns the internal jobId here
     const job = await submissionQueue.getJob(jobId);
-    
     if (job && job.data.submissionId) {
         const submissionId = job.data.submissionId;
         console.log(`Job ${jobId} finished for submission ${submissionId}`);
-
-        // Fetch the final result from MongoDB (updated by Worker)
         const submission = await Submission.findById(submissionId);
-        
-        // Emit event to the specific client room
         io.to(submissionId).emit('submissionResult', submission);
     }
 });
-// ------------------------------------
 
-// Pass queue to routes so they can add jobs
 app.set('submissionQueue', submissionQueue);
 
 // Register Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/problems', problemRoutes); 
-app.use('/api/discussions', discussionRoutes); // Mount new routes
+app.use('/api/discussions', discussionRoutes);
+app.use('/api/ai', aiRoutes); // <--- REGISTER ROUTE
 
-// Base Route
 app.get('/', (req, res) => {
     res.send('AlgoVerse API is running');
 });
 
-// Socket.io Connection
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
-
-    // Client joins a room specific to their submission ID to wait for results
     socket.on('joinSubmission', (submissionId) => {
         socket.join(submissionId);
-        console.log(`Socket ${socket.id} joined room: ${submissionId}`);
     });
+    // --- REGISTER BATTLE HANDLERS ---
+    setupBattleHandlers(io, socket);
+    // --------------------------------
 
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
+        // Note: BattleHandler handles queue cleanup internally if logic added there
     });
 });
 
-// Start Server
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {

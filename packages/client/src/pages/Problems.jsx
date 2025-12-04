@@ -1,29 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Briefcase, Tag } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import axios from 'axios';
 
 const Problems = () => {
-    // Mock Data (Replace with API fetch later)
-    const [problems, setProblems] = useState([
-        { _id: '6930030a1e01b612eff201c7', title: 'Two Sum', difficulty: 'Easy', acceptance: '48%', tags: ['Arrays', 'Hash Table'], companies: ['Google', 'Amazon'] },
-        { _id: '2', title: 'Add Two Numbers', difficulty: 'Medium', acceptance: '39%', tags: ['LinkedList', 'Math'], companies: ['Microsoft'] },
-        { _id: '3', title: 'Median of Two Sorted Arrays', difficulty: 'Hard', acceptance: '35%', tags: ['Arrays', 'Binary Search'], companies: ['Google', 'Apple'] },
-        { _id: '4', title: 'Longest Palindromic Substring', difficulty: 'Medium', acceptance: '32%', tags: ['String', 'DP'], companies: ['Amazon'] },
-    ]);
-
+    const [problems, setProblems] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
 
-    // Fetch problems from backend (Uncomment when API is ready)
-    /*
+    // Fetch problems from backend
     useEffect(() => {
         const fetchProblems = async () => {
-            const res = await axios.get('http://localhost:5000/api/problems');
-            setProblems(res.data);
+            try {
+                const res = await axios.get('http://localhost:5000/api/problems');
+                setProblems(res.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Failed to fetch problems:", err);
+                setLoading(false);
+            }
         };
         fetchProblems();
     }, []);
-    */
+
+    // Filter logic
+    const filteredProblems = problems.filter(prob => 
+        prob.title.toLowerCase().includes(filter.toLowerCase()) ||
+        (prob.tags && prob.tags.some(tag => tag.toLowerCase().includes(filter.toLowerCase())))
+    );
+
+    if (loading) return <div className="text-center mt-20 text-white">Loading library...</div>;
 
     return (
         <div className="space-y-8">
@@ -70,37 +76,42 @@ const Problems = () => {
                 </div>
 
                 <div className="divide-y divide-white/5">
-                    {problems.map((prob) => (
-                        <div key={prob._id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-white/5 transition-colors group">
-                            <div className="col-span-1">
-                                <div className="w-5 h-5 rounded-full border-2 border-white/20 group-hover:border-primary/50"></div>
-                            </div>
-                            <div className="col-span-5">
-                                <Link to={`/problem/${prob._id}`} className="font-medium text-white hover:text-primary transition-colors block">
-                                    {prob.title}
-                                </Link>
-                                <div className="flex gap-2 mt-1">
-                                    {prob.tags.map(t => <span key={t} className="text-[10px] bg-white/5 px-1.5 py-0.5 rounded text-muted">{t}</span>)}
+                    {filteredProblems.length === 0 ? (
+                        <div className="p-8 text-center text-muted">No problems found. Did you run the seed script?</div>
+                    ) : (
+                        filteredProblems.map((prob) => (
+                            <div key={prob._id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-white/5 transition-colors group">
+                                <div className="col-span-1">
+                                    <div className="w-5 h-5 rounded-full border-2 border-white/20 group-hover:border-primary/50"></div>
+                                </div>
+                                <div className="col-span-5">
+                                    <Link to={`/problem/${prob._id}`} className="font-medium text-white hover:text-primary transition-colors block">
+                                        {prob.title}
+                                    </Link>
+                                    <div className="flex gap-2 mt-1">
+                                        {prob.tags && prob.tags.map(t => <span key={t} className="text-[10px] bg-white/5 px-1.5 py-0.5 rounded text-muted">{t}</span>)}
+                                    </div>
+                                </div>
+                                <div className="col-span-2">
+                                    <span className={`text-xs font-bold px-2 py-1 rounded 
+                                        ${prob.difficulty === 'Easy' ? 'text-green-400 bg-green-400/10' : 
+                                          prob.difficulty === 'Medium' ? 'text-yellow-400 bg-yellow-400/10' : 
+                                          'text-red-400 bg-red-400/10'}`}>
+                                        {prob.difficulty}
+                                    </span>
+                                </div>
+                                <div className="col-span-2 text-sm text-muted">
+                                    {/* Defaulting acceptance if missing, as simple schema might not track it yet */}
+                                    {prob.acceptance || 'N/A'}
+                                </div>
+                                <div className="col-span-2 text-right">
+                                    <Link to={`/problem/${prob._id}`} className="text-primary text-sm font-bold hover:underline">
+                                        Solve
+                                    </Link>
                                 </div>
                             </div>
-                            <div className="col-span-2">
-                                <span className={`text-xs font-bold px-2 py-1 rounded 
-                                    ${prob.difficulty === 'Easy' ? 'text-green-400 bg-green-400/10' : 
-                                      prob.difficulty === 'Medium' ? 'text-yellow-400 bg-yellow-400/10' : 
-                                      'text-red-400 bg-red-400/10'}`}>
-                                    {prob.difficulty}
-                                </span>
-                            </div>
-                            <div className="col-span-2 text-sm text-muted">
-                                {prob.acceptance}
-                            </div>
-                            <div className="col-span-2 text-right">
-                                <Link to={`/problem/${prob._id}`} className="text-primary text-sm font-bold hover:underline">
-                                    Solve
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
         </div>
